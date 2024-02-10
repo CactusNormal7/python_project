@@ -25,3 +25,13 @@ class Menu:
         if button_rect.collidepoint(mouse_pos):
             if pygame.mouse.get_pressed()[0]:
                 action()
+
+    def display_difficulty(self,screen, action):
+        button_font = pygame.font.Font(None, 36)
+        button_text = button_font.render(self.difficulty, True, (255, 255, 255))
+        button_rect = button_text.get_rect(center=(screen.get_width() / 2, screen.get_height() / 2 + 100))
+        screen.blit(button_text, button_rect)
+        mouse_pos = pygame.mouse.get_pos()
+        if button_rect.collidepoint(mouse_pos):
+            if pygame.mouse.get_pressed()[0]:
+                action()
