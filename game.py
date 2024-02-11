@@ -23,6 +23,14 @@ class Player:
         if self.speed > 500:
             self.speed = 500
 
+    def on_collide_trap(self,difficulty):
+        if difficulty == "easy":
+            self.size = self.size // 2
+        elif difficulty == "medium":
+            self.size = self.size // 3
+        else:
+            self.size = self.size // 4
+
 class Cells:
     def __init__(self,x,y,scr,size,color):
         self.x = x

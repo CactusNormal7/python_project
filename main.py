@@ -72,20 +72,29 @@ def start_stop():
 def add_cell(cells_list,screen):
     x = random.randint(0, screen_width)
     y = random.randint(0, screen_height)
-    cells_list.append(game.Cells(x,y,screen,5,RED))
+    cells_list.append(game.Cells(x,y,screen,5,(0,0,255)))
 
 def add_trap(trap_list, screen):
     x = random.randint(0, screen_width)
     y = random.randint(0, screen_height)
-    trap_list.append(game.Trap(30,RED,x,y,screen))
+    size = random.randint(40,150)
+    trap_list.append(game.Trap(size,(0,255,0),x,y,screen))
 
-def handle_collision(player, cells_list):
+def handle_collision_playerXcells(player, cells_list):
     for cell in cells_list:
         distance = sqrt((player.x - cell.x) ** 2 + (player.y - cell.y) ** 2)
         if distance <= player.size + cell.size:
             add_cell(cells_list, screen)
             cell.on_collide(cells_list)
             player.on_collide()
+
+def handle_collision_playerXtraps(player, trap_list,difficuty):
+    for trap in trap_list:
+        distance = sqrt((player.x - trap.x) ** 2 + (player.y - trap.y) ** 2)
+        if distance <= player.size + trap.size:
+            if player.size > trap.size :
+                player.on_collide_trap(difficuty)
+            
 
 def generate_cells(cells_list):
     if difficulty == 'easy':
@@ -123,9 +132,17 @@ def main():
                 
 
         if is_started:
+            clock.tick(30)
             diviser = player.speed/12
             speed = player.speed / (diviser + 2)
-            print(speed)
+            if player.x <= 10:
+                player.x = 770
+            elif player.x >= 780:
+                player.x = 12
+            if player.y >= 580:
+                player.y = 15
+            elif player.y <= 20:
+                player.y = 570
             if is_mouse:
                 mouse_pos = pygame.mouse.get_pos()
                 dx = mouse_pos[0] - player.x
@@ -139,16 +156,17 @@ def main():
             else:
                 keys = pygame.key.get_pressed()
                 if keys[pygame.K_q]:
-                    player.x -= player.speed / diviser
+                    player.x -= speed
                 if keys[pygame.K_d]:
-                    player.x += player.speed/ diviser
+                    player.x += speed
                 if keys[pygame.K_z]:
-                    player.y -= player.speed/ diviser
+                    player.y -= speed
                 if keys[pygame.K_s]:
-                    player.y += player.speed/ diviser
-            #collide section
-            handle_collision(player,cells_list)
+                    player.y += speed
 
+            #collide section
+            handle_collision_playerXcells(player,cells_list)
+            handle_collision_playerXtraps(player,traps_list,difficulty)
             #display section
             player.display()
             updateHud(player,hud)
@@ -159,6 +177,7 @@ def main():
                 trap.display()
             
         else:
+            clock.tick(18)
             main_menu.display(screen, lambda : start_stop())
             main_menu.display_control(screen, lambda : control_change())
             main_menu.display_difficulty(screen, lambda : diff_change())
@@ -166,9 +185,8 @@ def main():
             traps_list = []
             generate_cells(cells_list)
             generate_trap(traps_list)
-            
         pygame.display.flip()
-        clock.tick(30)
+
 
     pygame.quit()
 
