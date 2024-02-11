@@ -1,6 +1,7 @@
 import pygame
 import menu
 import game
+import time
 import random
 
 
@@ -11,10 +12,14 @@ def sqrt(x):
 # Initialize Pygame
 pygame.init()
 
+time_to_play = 5
+
 # Colors
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
+GREEN = (0,255,0)
+BLUE = (0,0,255)
 
 # Screen size
 screen_width = 800
@@ -23,8 +28,8 @@ cell_size = 20
 cell_amout = 0
 trap_amout = 0
 
-difficulty = "easy"
 
+difficulty = "easy"
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Simplified Agar.io")
 main_menu = menu.Menu("mouse", "easy")
@@ -33,6 +38,8 @@ clock = pygame.time.Clock()
 
 is_mouse = True
 is_started = False
+is_gamer_over = False
+
 
 def updateHud(player, hud):
     hud.score = player.score
@@ -52,7 +59,6 @@ def diff_change():
         difficulty = "easy"
         main_menu.difficulty = "easy"
 
-
 def control_change():
     global is_mouse
     if is_mouse:
@@ -69,16 +75,25 @@ def start_stop():
     else:
         is_started = True
 
+
+def game_over():
+    global is_gamer_over
+    if is_gamer_over:
+        is_gamer_over = False
+    else:
+        is_gamer_over = True
+
+
 def add_cell(cells_list,screen):
     x = random.randint(0, screen_width)
     y = random.randint(0, screen_height)
-    cells_list.append(game.Cells(x,y,screen,5,(0,0,255)))
+    cells_list.append(game.Cells(x,y,screen,5,BLUE))
 
 def add_trap(trap_list, screen):
     x = random.randint(0, screen_width)
     y = random.randint(0, screen_height)
     size = random.randint(40,150)
-    trap_list.append(game.Trap(size,(0,255,0),x,y,screen))
+    trap_list.append(game.Trap(size,GREEN,x,y,screen))
 
 def handle_collision_playerXcells(player, cells_list):
     for cell in cells_list:
@@ -118,63 +133,77 @@ def generate_trap(trap_list):
     for _ in range(trap_amout):
         add_trap(trap_list, screen)
 
-# Main function
+def restart():
+    game_over()
+    start_stop()
+    main()
+
 def main():
     player = game.Player(screen_width // 2, screen_height // 2, cell_size, RED, screen, 5)
     hud = game.Hud(player.score, player.size, player.speed, difficulty)
     running = True
-    
+    start_time = None
     while running:
         screen.fill(BLACK)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-                
 
+        
         if is_started:
-            clock.tick(30)
-            diviser = player.speed/12
-            speed = player.speed / (diviser + 2)
-            if player.x <= 10:
-                player.x = 770
-            elif player.x >= 780:
-                player.x = 12
-            if player.y >= 580:
-                player.y = 15
-            elif player.y <= 20:
-                player.y = 570
-            if is_mouse:
-                mouse_pos = pygame.mouse.get_pos()
-                dx = mouse_pos[0] - player.x
-                dy = mouse_pos[1] - player.y
-                distance = sqrt(dx ** 2 + dy ** 2)
-                if distance > 0:
-                    if mouse_pos[0] >= (player.x + 10) or mouse_pos[0] <= (player.x - 10):
-                        ratio = (speed) / distance
-                        player.x += dx * ratio
-                        player.y += dy * ratio
+            if is_gamer_over:
+                main_menu.display_game_over(screen,player.score ,lambda : restart())
             else:
-                keys = pygame.key.get_pressed()
-                if keys[pygame.K_q]:
-                    player.x -= speed
-                if keys[pygame.K_d]:
-                    player.x += speed
-                if keys[pygame.K_z]:
-                    player.y -= speed
-                if keys[pygame.K_s]:
-                    player.y += speed
+                if start_time is None:
+                    start_time = time.time()
+                elapsed_time = time.time() - start_time
+                remaining_time = time_to_play - elapsed_time
+                if remaining_time <= 0:
+                    game_over()
+                clock.tick(30)
+                diviser = player.speed/12
+                speed = player.speed / (diviser + 2)
+                if player.x <= 10:
+                    player.x = 770
+                elif player.x >= 780:
+                    player.x = 12
+                if player.y >= 580:
+                    player.y = 30
+                elif player.y <= 20:
+                    player.y = 570
+                if is_mouse:
+                    mouse_pos = pygame.mouse.get_pos()
+                    dx = mouse_pos[0] - player.x
+                    dy = mouse_pos[1] - player.y
+                    distance = sqrt(dx ** 2 + dy ** 2)
+                    if distance > 0:
+                        if mouse_pos[0] >= (player.x + 10) or mouse_pos[0] <= (player.x - 10):
+                            ratio = (speed) / distance
+                            player.x += dx * ratio
+                            player.y += dy * ratio
+                else:
+                    keys = pygame.key.get_pressed()
+                    if keys[pygame.K_q]:
+                        player.x -= speed
+                    if keys[pygame.K_d]:
+                        player.x += speed
+                    if keys[pygame.K_z]:
+                        player.y -= speed
+                    if keys[pygame.K_s]:
+                        player.y += speed
 
-            #collide section
-            handle_collision_playerXcells(player,cells_list)
-            handle_collision_playerXtraps(player,traps_list,difficulty)
-            #display section
-            player.display()
-            updateHud(player,hud)
-            hud.display_hud(screen)
-            for cell in cells_list:
-                cell.display()
-            for trap in traps_list:
-                trap.display()
+                #-------------------
+                handle_collision_playerXcells(player,cells_list)
+                handle_collision_playerXtraps(player,traps_list,difficulty)
+                #-------------------
+                player.display()
+                updateHud(player,hud)
+                hud.timer = round(remaining_time)
+                hud.display_hud(screen)
+                for cell in cells_list:
+                    cell.display()
+                for trap in traps_list:
+                    trap.display()
             
         else:
             clock.tick(18)

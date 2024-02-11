@@ -17,7 +17,7 @@ class Player:
         pygame.draw.circle(self.__screen, self.color, (self.x, self.y), self.size)
 
     def on_collide(self):
-        self.size += 2
+        self.size += 15
         self.speed += 5
         self.score += 1
         if self.speed > 500:
@@ -52,6 +52,7 @@ class Hud:
         self.size = size
         self.speed = speed
         self.difficulty = difficulty
+        self.timer = 60
 
     def display_hud(self,screen):
         font = pygame.font.Font(None, 24)
@@ -61,11 +62,13 @@ class Hud:
         size_text = font.render("Size: {}".format(self.size), True, text_color)
         speed_text = font.render("Speed: {}".format(self.speed), True, text_color)
         difficulty_text = font.render("Difficulty: {}".format(self.difficulty), True, text_color)
+        timer = font.render("time: {}".format(self.timer), True, text_color)
 
         screen.blit(score_text, (10, 10))
         screen.blit(size_text, (10, 40))
         screen.blit(speed_text, (10, 70))
         screen.blit(difficulty_text, (10, 100))
+        screen.blit(timer, (10, 130))
 
 
 class Trap:
